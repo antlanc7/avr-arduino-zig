@@ -1,6 +1,6 @@
 const MMIO = @import("mmio.zig").MMIO;
 
- const PINB = MMIO(0x23, u8, packed struct {
+const PINB = MMIO(0x23, u8, packed struct {
     PINB0: u1 = 0,
     PINB1: u1 = 0,
     PINB2: u1 = 0,
@@ -33,7 +33,7 @@ const PORTB = MMIO(0x25, u8, packed struct {
     PORTB7: u1 = 0,
 });
 
- const PINC = MMIO(0x26, u8, packed struct {
+const PINC = MMIO(0x26, u8, packed struct {
     PINC0: u1 = 0,
     PINC1: u1 = 0,
     PINC2: u1 = 0,

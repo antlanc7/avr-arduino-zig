@@ -2,7 +2,6 @@ const vectors = @import("vectors.zig");
 const uart = @import("uart.zig");
 const std = @import("std");
 
-
 pub export fn _start() callconv(.Naked) noreturn {
     // At startup the stack pointer is at the end of RAM
     // so, no need to set it manually!
@@ -15,7 +14,7 @@ pub export fn _start() callconv(.Naked) noreturn {
     clear_bss();
 
     @import("root").main();
-    
+
     while (true) {}
 }
 
@@ -67,12 +66,14 @@ fn clear_bss() void {
 }
 
 pub fn panicHang(msg: []const u8, maybe_stack_trace: ?*std.builtin.StackTrace) noreturn {
+    _ = maybe_stack_trace;
+    _ = msg;
     while (true) {}
 }
 
-
 // !! uart has to be initialized for this to work
 pub fn panicLogUart(msg: []const u8, maybe_stack_trace: ?*std.builtin.StackTrace) noreturn {
+    _ = maybe_stack_trace;
     uart.write("PANIC: ");
     uart.write(msg);
     uart.write("\r\n");

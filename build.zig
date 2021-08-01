@@ -8,9 +8,9 @@ pub fn build(b: *std.build.Builder) !void {
         .abi = .none,
     };
 
-    const lib = std.build.Pkg {
+    const lib = std.build.Pkg{
         .name = "arduino",
-        .path = "src/arduino.zig",
+        .path = .{ .path = "src/arduino.zig" },
     };
 
     const exe_name = b.option(
@@ -19,13 +19,12 @@ pub fn build(b: *std.build.Builder) !void {
         "Specify the example to build. Defaults to examples/blink.zig",
     ) orelse "examples/blink.zig";
 
-
     const exe = b.addExecutable(std.mem.trimRight(u8, std.fs.path.basename(exe_name), ".zig"), exe_name);
     exe.addPackage(lib);
     exe.setTarget(uno);
     exe.setBuildMode(.ReleaseSafe);
     exe.bundle_compiler_rt = false;
-    exe.setLinkerScriptPath("src/linker.ld");
+    exe.setLinkerScriptPath(.{ .path = "src/linker.ld" });
     exe.install();
 
     const tty = b.option(

@@ -113,7 +113,6 @@ pub fn writeLines(line1: []const u8, line2: []const u8) void {
         write(c);
 }
 
-
 pub fn setCursor(col: u8, row: u8) void {
     var c = col;
     if (col > 15) c = 15;
@@ -130,7 +129,7 @@ pub fn writePanic(msg: []const u8) void {
     for ("Panic! Msg:") |c|
         write(c);
 
-    const short = if (msg.len > 16) msg[0..16] else msg;
+    //const short = if (msg.len > 16) msg[0..16] else msg;
     command(Control.set_DDRAM_address | 0x40);
 
     for (msg) |c|

@@ -1,7 +1,5 @@
 pub fn MMIO(comptime addr: usize, comptime IntT: type, comptime PackedT: type) type {
-
     return struct {
-
         pub fn ptr() *volatile IntT {
             return @intToPtr(*volatile IntT, addr);
         }

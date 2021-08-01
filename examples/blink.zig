@@ -7,16 +7,15 @@ pub const panic = arduino.start.panicHang;
 const LED: u8 = 13;
 
 pub fn main() void {
-
     gpio.init(LED, .output);
 
-    while(true) {
+    while (true) {
         gpio.write(LED, .high);
-        
+
         arduino.cpu.delayMilliseconds(500);
 
         gpio.write(LED, .low);
-        
+
         arduino.cpu.delayMilliseconds(500);
     }
 }

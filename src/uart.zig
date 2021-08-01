@@ -7,7 +7,6 @@
 // bss_stuff = "\r\nhello\r\n".*;
 // uart.write(&bss_stuff);
 
-
 const MMIO = @import("mmio.zig").MMIO;
 
 const UDR0 = MMIO(0xc6, u8, packed union {
