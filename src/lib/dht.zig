@@ -5,7 +5,8 @@ const cpu = @import("../cpu.zig");
 // from  https://github.com/RobTillaart/Arduino/tree/master/libraries/DHTlib
 // and the spec: https://www.gotronic.fr/pj-1052.pdf
 
-// clang doesn't seem to like error unions...
+// clang11? doesn't seem to like error unions...
+//  --> hack it for now
 const HackError = enum(u8) {
     OK,
     BAD_CHECKSUM,
@@ -14,16 +15,16 @@ const HackError = enum(u8) {
     INTERRUPTED,
 };
 
-pub const Readout = struct { humidity_x10: i16, temperature_x10: i16, err: HackError }; // fixedpoint values.
+pub const Readout = struct { humidity_x10: i16, temperature_x10: i16, err: HackError }; // fixedpoint values. divide by 10 for the actual flaot value
 
 pub fn DHT22(comptime sensor_data_pin: u8) type {
     return struct {
         pub fn read() Readout {
-            const raw = readSensor(sensor_data_pin);
-            if (raw < 10) { // HackError
-                return .{ .humidity_x10 = 0, .temperature_x10 = 0, .err = @intToEnum(HackError, @intCast(u8, raw)) };
+            const r = readSensor(sensor_data_pin);
+            if (r.err != .OK) { // HackError
+                return .{ .humidity_x10 = 0, .temperature_x10 = 0, .err = r.err };
             }
-            return convertRawSensor(raw);
+            return convertRawSensor(r.raw);
         }
 
         fn convertRawSensor(raw: u40) Readout {
@@ -36,8 +37,7 @@ pub fn DHT22(comptime sensor_data_pin: u8) type {
                     temp_sign: u1,
                     hum: u16,
                 },
-            } = undefined;
-            sensor.raw = raw;
+            } = .{ .raw = raw };
 
             const checksum = sensor.bytes[4] +% sensor.bytes[1] +% sensor.bytes[2] +% sensor.bytes[3];
             if (checksum != sensor.values.checksum)
@@ -45,7 +45,7 @@ pub fn DHT22(comptime sensor_data_pin: u8) type {
 
             return Readout{
                 .humidity_x10 = @intCast(i16, sensor.values.hum),
-                .temperature_x10 = if (sensor.values.temp_sign != 0) -@intCast(i16, sensor.values.temp) else @intCast(i16, sensor.values.temp),
+                .temperature_x10 = if (sensor.values.temp_sign != 0) -@as(i16, sensor.values.temp) else @as(i16, sensor.values.temp),
                 .err = .OK,
             };
         }
@@ -60,7 +60,7 @@ pub fn DHT22(comptime sensor_data_pin: u8) type {
             return false;
         }
 
-        fn readSensor(comptime pin: u8) u40 {
+        fn readSensor(comptime pin: u8) struct { raw: u40 = 0, err: HackError = .OK } {
             const wakeup_delay = 1;
             const leading_zero_bits = 6;
 
@@ -77,9 +77,9 @@ pub fn DHT22(comptime sensor_data_pin: u8) type {
                 gpio.setPin(pin, .high);
                 gpio.setMode(pin, .input_pullup);
 
-                if (!waitPinState(pin, .low, TIMEOUT_100us * 2)) return @enumToInt(HackError.NO_CONNECTION); // 40+80us
-                if (!waitPinState(pin, .high, TIMEOUT_100us)) return @enumToInt(HackError.NO_ACK); // 80us
-                if (!waitPinState(pin, .low, TIMEOUT_100us)) return @enumToInt(HackError.NO_ACK); // 80us
+                if (!waitPinState(pin, .low, TIMEOUT_100us * 2)) return .{ .err = .NO_CONNECTION }; // 40+80us
+                if (!waitPinState(pin, .high, TIMEOUT_100us)) return .{ .err = .NO_ACK }; // 80us
+                if (!waitPinState(pin, .low, TIMEOUT_100us)) return .{ .err = .NO_ACK }; // 80us
             }
 
             // READ THE OUTPUT - 40 BITS
@@ -87,7 +87,7 @@ pub fn DHT22(comptime sensor_data_pin: u8) type {
             var result: u40 = 0;
             var bit_idx: u8 = 0;
             while (bit_idx < 40) : (bit_idx += 1) {
-                if (!waitPinState(pin, .high, TIMEOUT_100us)) return @enumToInt(HackError.INTERRUPTED); // 50us
+                if (!waitPinState(pin, .high, TIMEOUT_100us)) return .{ .err = .INTERRUPTED }; // 50us
 
                 // measure time to get low:
                 const duration = blk: {
@@ -96,18 +96,19 @@ pub fn DHT22(comptime sensor_data_pin: u8) type {
                         if (gpio.getPin(pin) == .low)
                             break :blk (TIMEOUT_100us - loop_count);
                     }
-                    return @enumToInt(HackError.INTERRUPTED); // 70us
+                    return .{ .err = .INTERRUPTED }; // 70us
                 };
 
                 if (bit_idx < leading_zero_bits) {
-                    zero_loop_len = if (zero_loop_len < duration) duration else zero_loop_len; // max observed time to get zero
+                    if (zero_loop_len < duration)
+                        zero_loop_len = duration; // max observed time to get zero
                 } else {
                     const is_one = duration > zero_loop_len; // exceeded zero duration
                     result = (result << 1) | @boolToInt(is_one);
                 }
             }
 
-            return result;
+            return .{ .raw = result };
         }
     };
 }
