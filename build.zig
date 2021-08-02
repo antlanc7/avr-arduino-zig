@@ -22,7 +22,8 @@ pub fn build(b: *std.build.Builder) !void {
     const exe = b.addExecutable(std.mem.trimRight(u8, std.fs.path.basename(exe_name), ".zig"), exe_name);
     exe.addPackage(lib);
     exe.setTarget(uno);
-    exe.setBuildMode(.ReleaseSafe);
+    exe.setBuildMode(.ReleaseSmall); // ReleaseSafe or Fast tend to unroll loops and seem to reorder volatile writes?
+    //exe.strip = true; //  avrdude already strips the debug info when flashing - and keeping it gives a nicer disassembly.
     exe.bundle_compiler_rt = false;
     exe.setLinkerScriptPath(.{ .path = "src/linker.ld" });
     exe.install();
@@ -59,7 +60,7 @@ pub fn build(b: *std.build.Builder) !void {
     const objdump = b.step("objdump", "Show dissassembly of the code using avr-objdump");
     const avr_objdump = b.addSystemCommand(&.{
         "avr-objdump",
-        "-dh",
+        "-dhS",
         bin_path,
     });
     objdump.dependOn(&avr_objdump.step);
