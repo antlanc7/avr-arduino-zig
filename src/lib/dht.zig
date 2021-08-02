@@ -19,6 +19,14 @@ pub const Readout = struct { humidity_x10: i16, temperature_x10: i16, err: HackE
 pub fn DHT22(comptime sensor_data_pin: u8) type {
     return struct {
         pub fn read() Readout {
+            const raw = readSensor(sensor_data_pin);
+            if (raw < 10) { // HackError
+                return .{ .humidity_x10 = 0, .temperature_x10 = 0, .err = @intToEnum(HackError, @intCast(u8, raw)) };
+            }
+            return convertRawSensor(raw);
+        }
+
+        fn convertRawSensor(raw: u40) Readout {
             var sensor: packed union { // little endian
                 raw: u40,
                 bytes: [5]u8,
@@ -28,12 +36,8 @@ pub fn DHT22(comptime sensor_data_pin: u8) type {
                     temp_sign: u1,
                     hum: u16,
                 },
-                err: HackError,
             } = undefined;
-            sensor.raw = readSensor(sensor_data_pin);
-            if (sensor.raw < 10) { // HackError
-                return .{ .humidity_x10 = 0, .temperature_x10 = 0, .err = sensor.err };
-            }
+            sensor.raw = raw;
 
             const checksum = sensor.bytes[4] +% sensor.bytes[1] +% sensor.bytes[2] +% sensor.bytes[3];
             if (checksum != sensor.values.checksum)
@@ -80,9 +84,9 @@ pub fn DHT22(comptime sensor_data_pin: u8) type {
 
             // READ THE OUTPUT - 40 BITS
             var zero_loop_len: u16 = TIMEOUT_100us / 4; // autocalibrate knowing there are leading zeros  (not checked with an oscilloscope or anything)
-            var mask: u40 = (1 << 39);
             var result: u40 = 0;
-            while (mask != 0) : (mask >>= 1) {
+            var bit_idx: u8 = 0;
+            while (bit_idx < 40) : (bit_idx += 1) {
                 if (!waitPinState(pin, .high, TIMEOUT_100us)) return @enumToInt(HackError.INTERRUPTED); // 50us
 
                 // measure time to get low:
@@ -95,12 +99,11 @@ pub fn DHT22(comptime sensor_data_pin: u8) type {
                     return @enumToInt(HackError.INTERRUPTED); // 70us
                 };
 
-                if (mask >= (1 << (40 - leading_zero_bits))) {
+                if (bit_idx < leading_zero_bits) {
                     zero_loop_len = if (zero_loop_len < duration) duration else zero_loop_len; // max observed time to get zero
                 } else {
                     const is_one = duration > zero_loop_len; // exceeded zero duration
-                    if (is_one)
-                        result |= mask;
+                    result = (result << 1) | @boolToInt(is_one);
                 }
             }
 
