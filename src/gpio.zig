@@ -103,16 +103,13 @@ const PORTD = MMIO(0x2B, u8, packed struct {
     PORTD7: u1 = 0,
 });
 
-// PWM (pulse width modulator)
+// pulse width modulator
 
 //Timers
 pub const TCCR2B = MMIO(0xB1, u8, packed struct {
-    CS20: u1 = 0,
-    CS21: u1 = 0,
-    CS22: u1 = 0,
+    CS2: u3 = 0,
     WGM22: u1 = 0,
-    _1: u1 = 0,
-    _2: u1 = 0,
+    _: u2 = 0,
     FOC2B: u1 = 0,
     FOC2A: u1 = 0,
 });
@@ -120,46 +117,49 @@ pub const TCCR2B = MMIO(0xB1, u8, packed struct {
 pub const TCCR2A = MMIO(0xB0, u8, packed struct {
     WGM20: u1 = 0,
     WGM21: u1 = 0,
-    _1: u1 = 0,
-    _2: u1 = 0,
-    COM2B0: u1 = 0,
-    COM2B1: u1 = 0,
-    COM2A0: u1 = 0,
-    COM2A1: u1 = 0,
+    _: u2 = 0,
+    COM2B: u2 = 0,
+    COM2A: u2 = 0,
 });
 
 //Timer counter 1 16-bit
 pub const TCCR1C = MMIO(0x82, u8, packed struct {
-    FOC1A: u1 = 0,
+    _: u5 = 0,
     FOC1B: u1 = 0,
-    _1: u1 = 0,
-    _2: u1 = 0,
-    _3: u1 = 0,
-    _4: u1 = 0,
-    _5: u1 = 0,
-    _6: u1 = 0,
+    FOC1A: u1 = 0,
 });
 
-pub const TCCR1B = MMIO(0x81, u16, packed struct {
-    ICNC1: u1 = 0,
-    ICES1: u1 = 0,
-    _1: u1 = 0,
-    WGM13: u1 = 0,
+pub const TCCR1B = MMIO(0x81, u8, packed struct {
+    CS1: u3 = 0,
     WGM12: u1 = 0,
-    CS12: u1 = 0,
-    CS11: u1 = 0,
-    CS10: u1 = 0,
+    WGM13: u1 = 0,
+    _: u1 = 0,
+    ICES1: u1 = 0,
+    ICNC1: u1 = 0,
 });
 
-pub const TCCR1A = MMIO(0x80, u16, packed struct {
-    COM1A1: u1 = 0,
-    COM1A0: u1 = 0,
-    COM1B1: u1 = 0,
-    COM1B0: u1 = 0,
-    _1: u1 = 0,
-    _2: u1 = 0,
-    WGM11: u1 = 0,
+pub const TCCR1A = MMIO(0x80, u8, packed struct {
     WGM10: u1 = 0,
+    WGM11: u1 = 0,
+    _: u2 = 0,
+    COM1B: u2 = 0,
+    COM1A: u2 = 0,
+});
+
+pub const TCCR0B = MMIO(0x45, u8, packed struct {
+    CS0: u3 = 0,
+    WGM02: u1 = 0,
+    _: u2 = 0,
+    FOC0B: u1 = 0,
+    FOC0A: u1 = 0,
+});
+
+pub const TCCR0A = MMIO(0x44, u8, packed struct {
+    WGM00: u1 = 0,
+    WGM01: u1 = 0,
+    _: u2 = 0,
+    COM0B: u2 = 0,
+    COM0A: u2 = 0,
 });
 
 //Timer counter 2 8-bit
@@ -177,15 +177,38 @@ pub const OCR0B = @intToPtr(*volatile u8, 0x47);
 pub const OCR0A = @intToPtr(*volatile u8, 0x46);
 
 //Timer counter 1 16-bit
-pub const OCR1BH = @intToPtr(*volatile u16, 0x8B);
-pub const OCR1BL = @intToPtr(*volatile u16, 0x8A);
-pub const OCR1AH = @intToPtr(*volatile u16, 0x89);
-pub const OCR1AL = @intToPtr(*volatile u16, 0x88);
+pub const OCR1BH = @intToPtr(*volatile u8, 0x8B);
+pub const OCR1BL = @intToPtr(*volatile u8, 0x8A);
+pub const OCR1AH = @intToPtr(*volatile u8, 0x89);
+pub const OCR1AL = @intToPtr(*volatile u8, 0x88);
 
-pub const ICR1H = @intToPtr(*volatile u16, 0x87);
-pub const ICR1L = @intToPtr(*volatile u16, 0x86);
-pub const TCNT1H = @intToPtr(*volatile u16, 0x85);
-pub const TCNT1L = @intToPtr(*volatile u16, 0x84);
+pub const ICR1H = @intToPtr(*volatile u8, 0x87);
+pub const ICR1L = @intToPtr(*volatile u8, 0x86);
+pub const TCNT1H = @intToPtr(*volatile u8, 0x85);
+pub const TCNT1L = @intToPtr(*volatile u8, 0x84);
+
+// Analog-to-digital converter
+
+pub const ADMUX = MMIO(0x7C, u8, packed struct {
+    MUX: u4 = 0,
+    _: u1 = 0,
+    ADLAR: u1 = 0,
+    REFS: u2 = 0,
+});
+
+pub const ADCSRA = MMIO(0x7A, u8, packed struct {
+    ADPS: u3 = 0,
+    ADIE: u1 = 0,
+    ADIF: u1 = 0,
+    ADATE: u1 = 0,
+    ADSC: u1 = 0,
+    ADEN: u1 = 0,
+});
+
+pub const ADCH = @intToPtr(*volatile u8, 0x79);
+pub const ADCL = @intToPtr(*volatile u8, 0x78);
+
+//
 
 const MCUCR = MMIO(0x55, u8, packed struct {
     IVCE: u1 = 0,
@@ -197,47 +220,82 @@ const MCUCR = MMIO(0x55, u8, packed struct {
     _2: u1 = 0,
 });
 
-/// Set the configuration registers
+/// Set the configuration registers as expected by the PWM and ADC functions
+///  set the timers same as standard arduino setup.
+//   (see https://github.com/arduino/ArduinoCore-avr/blob/master/cores/arduino/wiring.c )
 pub fn init() void {
     // PUD bit (Pull Up Disable) Atmel-7810-Automotive-Microcontrollers-ATmega328P_Datasheet.pdf#G1184233*
     // make sure the bit is disabled for pullup resitors to work
     // (already the default after reset)
-    var val = MCUCR.read();
-    val.PUD = 0;
-    MCUCR.write(val);
+    //var val = MCUCR.read();
+    //val.PUD = 0;
+    //MCUCR.write(val);
+
+    // set timers config (for PWM and time functions)
+    TCCR0A.write(.{ .WGM01 = 1, .WGM00 = 1 });
+    TCCR0B.write(.{ .CS0 = 3 });
+    TCCR1A.write(.{ .WGM10 = 1 });
+    TCCR1B.write(.{ .CS1 = 3 });
+    TCCR2A.write(.{ .WGM20 = 1 });
+    TCCR2B.write(.{ .CS2 = 4 });
+
+    // set the analog-to-digital converter config
+    ADCSRA.write(.{ .ADPS = 3, .ADEN = 1 }); // 16 MHz / 128 = 125 KHz
+}
+
+fn setBit(byte: u8, bit: u3, val: bool) u8 {
+    return if (val) (byte | @as(u8, 1) << bit) else (byte & ~(@as(u8, 1) << bit));
 }
 
 /// Configure the pin before use.
 pub fn setMode(comptime pin: comptime_int, comptime mode: enum { input, output, input_pullup, output_analog }) void {
+
+    // set the IO direction:
+    const out = switch (mode) {
+        .input, .input_pullup => false,
+        .output, .output_analog => true,
+    };
     switch (pin) {
-        0...7 => {
-            var val = DDRD.readInt();
-            if (mode == .output) {
-                val |= 1 << (pin - 0);
-            } else {
-                val &= ~@as(u8, 1 << (pin - 0));
-            }
-            DDRD.writeInt(val);
-        },
-        8...13 => {
-            var val = DDRB.readInt();
-            if (mode == .output) {
-                val |= 1 << (pin - 8);
-            } else {
-                val &= ~@as(u8, 1 << (pin - 8));
-            }
-            DDRB.writeInt(val);
-        },
-        14...19 => {
-            var val = DDRC.readInt();
-            if (mode == .output) {
-                val |= 1 << (pin - 14);
-            } else {
-                val &= ~@as(u8, 1 << (pin - 14));
-            }
-            DDRC.writeInt(val);
-        },
+        0...7 => DDRD.writeInt(setBit(DDRD.readInt(), (pin - 0), out)),
+        8...13 => DDRB.writeInt(setBit(DDRB.readInt(), (pin - 8), out)),
+        14...19 => DDRC.writeInt(setBit(DDRC.readInt(), (pin - 14), out)),
         else => @compileError("Only port B, C and D are available yet (arduino pins 0 through 19)."),
+    }
+
+    // set PWM for the pin
+    const com = if (mode == .output_analog) 0b10 else 0; // "clear output on compare match"
+    switch (pin) {
+        6 => { // OC0A
+            var r = TCCR0A.read();
+            r.COM0A = com;
+            TCCR0A.write(r);
+        },
+        5 => { // OC0B
+            var r = TCCR0A.read();
+            r.COM0B = com;
+            TCCR0A.write(r);
+        },
+        9 => { // OC1A
+            var r = TCCR1A.read();
+            r.COM1A = com;
+            TCCR1A.write(r);
+        },
+        10 => { // OC1B
+            var r = TCCR1A.read();
+            r.COM1B = com;
+            TCCR1A.write(r);
+        },
+        11 => { // OC2A
+            var r = TCCR2A.read();
+            r.COM2A = com;
+            TCCR2A.write(r);
+        },
+        3 => { // OC2B
+            var r = TCCR2A.read();
+            r.COM2B = com;
+            TCCR2A.write(r);
+        },
+        else => if (mode == .output_analog) @compileError("Not a valid PWM pin (allowed pins 3,5,6,9,10,11)."),
     }
 
     if (mode == .input_pullup) {
@@ -250,122 +308,62 @@ pub fn setMode(comptime pin: comptime_int, comptime mode: enum { input, output, 
 pub const PinState = enum { low, high };
 
 pub fn getPin(comptime pin: comptime_int) PinState {
-    return if (getPinBool(pin)) .high else .low;
-}
-
-pub fn getPinBool(comptime pin: comptime_int) bool {
-    switch (pin) {
-        0...7 => {
-            var val = PIND.readInt();
-            return (val & (1 << (pin - 0))) != 0;
-        },
-        8...13 => {
-            var val = PINB.readInt();
-            return (val & (1 << (pin - 8))) != 0;
-        },
-        14...19 => {
-            var val = PINC.readInt();
-            return (val & (1 << (pin - 14))) != 0;
-        },
+    const is_set = switch (pin) {
+        0...7 => (PIND.readInt() & (1 << (pin - 0))),
+        8...13 => (PINB.readInt() & (1 << (pin - 8))),
+        14...19 => (PINC.readInt() & (1 << (pin - 14))),
         else => @compileError("Only port B, C and D are available yet (arduino pins 0 through 19)."),
-    }
+    };
+    return if (is_set != 0) .high else .low;
 }
 
 pub fn setPin(comptime pin: comptime_int, comptime value: PinState) void {
     switch (pin) {
-        0...7 => {
-            var val = PORTD.readInt();
-            if (value == .high) {
-                val |= 1 << (pin - 0);
-            } else {
-                val &= ~@as(u8, 1 << (pin - 0));
-            }
-            PORTD.writeInt(val);
-        },
-        8...13 => {
-            var val = PORTB.readInt();
-            if (value == .high) {
-                val |= 1 << (pin - 8);
-            } else {
-                val &= ~@as(u8, 1 << (pin - 8));
-            }
-            PORTB.writeInt(val);
-        },
-        14...19 => {
-            var val = PORTC.readInt();
-            if (value == .high) {
-                val |= 1 << (pin - 14);
-            } else {
-                val &= ~@as(u8, 1 << (pin - 14));
-            }
-            PORTC.writeInt(val);
-        },
+        0...7 => PORTD.writeInt(setBit(PORTD.readInt(), (pin - 0), (value == .high))),
+        8...13 => PORTB.writeInt(setBit(PORTB.readInt(), (pin - 8), (value == .high))),
+        14...19 => PORTC.writeInt(setBit(PORTC.readInt(), (pin - 14), (value == .high))),
         else => @compileError("Only port B, C and D are available yet (arduino pins 0 through 19)."),
     }
 }
 
 pub fn togglePin(comptime pin: comptime_int) void {
     switch (pin) {
-        0...7 => {
-            var val = PORTD.readInt();
-            val ^= 1 << (pin - 0);
-            PORTD.writeInt(val);
-        },
-        8...13 => {
-            var val = PORTB.readInt();
-            val ^= 1 << (pin - 8);
-            PORTB.writeInt(val);
-        },
-        14...19 => {
-            var val = PORTC.readInt();
-            val ^= 1 << (pin - 14);
-            PORTC.writeInt(val);
-        },
+        0...7 => PORTD.writeInt(PORTD.readInt() ^ (1 << (pin - 0))),
+        8...13 => PORTB.writeInt(PORTB.readInt() ^ (1 << (pin - 8))),
+        14...19 => PORTC.writeInt(PORTC.readInt() ^ (1 << (pin - 14))),
         else => @compileError("Only port B, C and D are available yet (arduino pins 0 through 19)."),
     }
 }
 
 /// the pin must be configured in output_analog mode
 pub fn setPinAnalog(comptime pin: comptime_int, value: u8) void {
-    pinMode(pin, .output);
-
-    TCCR1A.writeInt(0b10000010);
-    TCCR1B.writeInt(0b00010001);
-
     if (value == 0) {
-        digitalWrite(pin, .low);
+        setPin(pin, .low);
     } else if (value == 255) {
-        digitalWrite(pin, .high);
-    }
-
-    switch (pin) {
-        3 => {
-            //Timer 2
-            OCR0A.* = value;
-        },
-        11 => {
-            //Timer 2
-            OCR0B.* = value;
-        },
-        5 => {
-            //Timer 0
-            OCR2A.* = value;
-        },
-        6 => {
-            //Timer 0
-            OCR2B.* = value;
-        },
-        9 => {
-            //Timer 1
-            ICR1L.* = 255;
-            OCR1AL.* = value;
-        },
-        10 => {
-            //Timer 1
-            ICR1L.* = 255;
-            OCR1BL.* = value;
-        },
-
+        setPin(pin, .high);
+    } else switch (pin) {
+        6 => OCR0A.* = value,
+        5 => OCR0B.* = value,
+        9 => OCR1AL.* = value,
+        10 => OCR1BL.* = value,
+        11 => OCR2A.* = value,
+        3 => OCR2B.* = value,
         else => @compileError("Not valid PWM pin (allowed pins 3,5,6,9,10,11)."),
     }
+}
+
+pub fn getPinAnalog(comptime pin: comptime_int) u16 {
+    // set channel & avcc as ref
+    ADMUX.write(.{ .REFS = 1, .MUX = pin });
+
+    //start conversion
+    ADCSRA.write(.{ .ADPS = 3, .ADEN = 1, .ADSC = 1 });
+
+    //wait until conversion end
+    while (ADCSRA.read().ADSC == 1) {}
+
+    var adc_val: u16 = ADCL.*; // ! ADCL must be read before ADCH.
+    adc_val |= @as(u16, ADCH.*) << 8;
+
+    return adc_val;
 }
