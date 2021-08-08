@@ -99,6 +99,88 @@ const PORTD = MMIO(0x2B, u8, packed struct {
     PORTD7: u1 = 0,
 });
 
+//Timers
+pub const TCCR2B = MMIO(0xB1, u8, packed struct {
+    CS20: u1 = 0,
+    CS21: u1 = 0,
+    CS22: u1 = 0,
+    WGM22: u1 = 0,
+    _1: u1 = 0,
+    _2: u1 = 0,
+    FOC2B: u1 = 0,
+    FOC2A: u1 = 0,
+});
+
+pub const TCCR2A = MMIO(0xB0, u8, packed struct {
+    WGM20: u1 = 0,
+    WGM21: u1 = 0,
+    _1: u1 = 0,
+    _2: u1 = 0,
+    COM2B0: u1 = 0,
+    COM2B1: u1 = 0,
+    COM2A0: u1 = 0,
+    COM2A1: u1 = 0,
+});
+
+//Timer counter 1 16-bit
+pub const TCCR1C = MMIO(0x82, u8, packed struct {
+    FOC1A: u1 = 0,
+    FOC1B: u1 = 0,
+    _1: u1 = 0,
+    _2: u1 = 0,
+    _3: u1 = 0,
+    _4: u1 = 0,
+    _5: u1 = 0,
+    _6: u1 = 0,
+});
+
+pub const TCCR1B = MMIO(0x81, u16, packed struct {
+    ICNC1: u1 = 0,
+    ICES1: u1 = 0,
+    _1: u1 = 0,
+    WGM13: u1 = 0,
+    WGM12: u1 = 0,
+    CS12: u1 = 0,
+    CS11: u1 = 0,
+    CS10: u1 = 0,
+});
+
+pub const TCCR1A = MMIO(0x80, u16, packed struct {
+    COM1A1: u1 = 0,
+    COM1A0: u1 = 0,
+    COM1B1: u1 = 0,
+    COM1B0: u1 = 0,
+    _1: u1 = 0,
+    _2: u1 = 0,
+    WGM11: u1 = 0,
+    WGM10: u1 = 0,
+});
+
+//Timer counter 2 8-bit
+pub const TCNT2 = @intToPtr(*volatile u8, 0xB2);
+
+// Compare registers
+pub const OCR2B = @intToPtr(*volatile u8, 0xB4);
+pub const OCR2A = @intToPtr(*volatile u8, 0xB3);
+
+//Timer counter 0 8-bit
+pub const TCNT0 = @intToPtr(*volatile u8, 0x46);
+
+// Compare Registers
+pub const OCR0B = @intToPtr(*volatile u8, 0x47);
+pub const OCR0A = @intToPtr(*volatile u8, 0x46);
+
+//Timer counter 1 16-bit
+pub const OCR1BH = @intToPtr(*volatile u16, 0x8B);
+pub const OCR1BL = @intToPtr(*volatile u16, 0x8A);
+pub const OCR1AH = @intToPtr(*volatile u16, 0x89);
+pub const OCR1AL = @intToPtr(*volatile u16, 0x88);
+
+pub const ICR1H = @intToPtr(*volatile u16, 0x87);
+pub const ICR1L = @intToPtr(*volatile u16, 0x86);
+pub const TCNT1H = @intToPtr(*volatile u16, 0x85);
+pub const TCNT1L = @intToPtr(*volatile u16, 0x84);
+
 pub fn init(comptime pin: comptime_int, comptime mode: enum { input, output, input_pullup }) void {
     switch (pin) {
         0...7 => {
@@ -207,5 +289,76 @@ pub fn toggle(comptime pin: comptime_int) void {
             PORTC.writeInt(val);
         },
         else => @compileError("Only port B, C and D are available yet (arduino pins 0 through 19)."),
+    }
+}
+
+pub fn analogWrite(comptime pin: comptime_int, value: u8) void {
+    pinMode(pin, .output);
+
+    TCCR1A.writeInt(0b10000010);
+    TCCR1B.writeInt(0b00010001);
+
+    if (value == 0) {
+        digitalWrite(pin, .low);
+    } else if (value == 255) {
+        digitalWrite(pin, .high);
+    }
+
+    switch (pin) {
+        3 => {
+            //Timer 2
+            OCR0A.* = value;
+        },
+        11 => {
+            //Timer 2
+            OCR0B.* = value;
+        },
+        5 => {
+            //Timer 0
+            OCR2A.* = value;
+        },
+        6 => {
+            //Timer 0
+            OCR2B.* = value;
+        },
+        9 => {
+            //Timer 1
+            ICR1L.* = 255;
+            OCR1AL.* = value;
+        },
+        10 => {
+            //Timer 1
+            ICR1L.* = 255;
+            OCR1BL.* = value;
+        },
+        
+
+        else => @compileError("Not valid PWM pin (allowed pins 3,5,6,9,10,11)."),
+    }
+}
+
+pub fn delayCycles(cycles: u32) void {
+    var count: u32 = 0;
+    while (count < cycles) : (count += 1) {
+        asm volatile ("nop");
+    }
+}
+
+pub fn delay(ms: u32) void {
+    var i: u32 = ms << 4;
+    while (i > 0) {
+        var c: u8 = 255;
+        // We decrement c to 0.
+        // This takes cycles * 256 / F_CPU miliseconds.
+        asm volatile (
+            \\1:
+            \\    dec %[c]
+            \\    nop
+            \\    brne 1b
+            :
+            : [c] "r" (c)
+        );
+
+        i -= 1;
     }
 }

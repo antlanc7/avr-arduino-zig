@@ -57,9 +57,7 @@ const UBRR0H = MMIO(0xc5, u8, packed struct {
 });
 
 pub fn init(comptime cpu_freq: comptime_int, comptime baud: comptime_int) void {
-    const UBRRn: u12 = comptime blk: {
-        break :blk (cpu_freq / (8 * baud)) - 1;
-    };
+    const UBRRn: u12 = (cpu_freq / (8 * baud)) - 1;
 
     // Set baudrate
     UBRR0L.write(.{ .USART = UBRRn });
@@ -73,17 +71,19 @@ pub fn init(comptime cpu_freq: comptime_int, comptime baud: comptime_int) void {
 }
 
 pub fn write(data: []const u8) void {
-    for (data) |ch| {
-        write_ch(ch);
-    }
+    for (data) |ch| writeCh(ch);
 
     // Wait till we are actually done sending
     while (UCSR0A.read().TXC0 != 1) {}
 }
 
-pub fn write_ch(ch: u8) void {
+pub fn writeCh(ch: u8) void {
     // Wait till the transmit buffer is empty
     while (UCSR0A.read().UDRE0 != 1) {}
 
     UDR0.write(.{ .TXB = ch });
+}
+
+pub fn writeInt(value: u8) void {
+    writeCh(std.fmt.digitToChar(value, true));
 }
