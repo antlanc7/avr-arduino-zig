@@ -84,6 +84,6 @@ pub fn writeCh(ch: u8) void {
     UDR0.write(.{ .TXB = ch });
 }
 
-pub fn writeInt(value: u8) void {
+pub fn writeHex(value: u8) void {
     writeCh(std.fmt.digitToChar(value, true));
 }

@@ -39,8 +39,8 @@ pub const Tube = packed struct {
 };
 
 pub fn init() void {
-    gpio.pinMode(SDA_pin, .output);
-    gpio.pinMode(SCL_pin, .output);
+    gpio.setMode(SDA_pin, .output);
+    gpio.setMode(SCL_pin, .output);
 }
 
 pub fn setBrightness(brightness: u3) void {
@@ -124,19 +124,19 @@ fn letterTransform(letter: u7) u8 {
 
 const Tm1650 = struct {
     fn begin() void {
-        gpio.digitalWrite(SCL_pin, .high);
-        gpio.digitalWrite(SDA_pin, .high);
+        gpio.setPin(SCL_pin, .high);
+        gpio.setPin(SDA_pin, .high);
         delayMicroseconds(2);
-        gpio.digitalWrite(SDA_pin, .low);
+        gpio.setPin(SDA_pin, .low);
         delayMicroseconds(2);
-        gpio.digitalWrite(SCL_pin, .low);
+        gpio.setPin(SCL_pin, .low);
     }
 
     fn stop() void {
-        gpio.digitalWrite(SCL_pin, .high);
-        gpio.digitalWrite(SDA_pin, .low);
+        gpio.setPin(SCL_pin, .high);
+        gpio.setPin(SDA_pin, .low);
         delayMicroseconds(2);
-        gpio.digitalWrite(SDA_pin, .high);
+        gpio.setPin(SDA_pin, .high);
         delayMicroseconds(2);
     }
 
@@ -146,21 +146,21 @@ const Tm1650 = struct {
         var i: u4 = 0;
         while (i < 8) : (i += 1) {
             if ((b & 0x80) != 0) {
-                gpio.digitalWrite(SDA_pin, .high);
-            } else gpio.digitalWrite(SDA_pin, .low);
+                gpio.setPin(SDA_pin, .high);
+            } else gpio.setPin(SDA_pin, .low);
 
             delayMicroseconds(2);
-            gpio.digitalWrite(SCL_pin, .high);
+            gpio.setPin(SCL_pin, .high);
             b <<= 1;
             delayMicroseconds(2);
-            gpio.digitalWrite(SCL_pin, .low);
+            gpio.setPin(SCL_pin, .low);
         }
 
-        gpio.digitalWrite(SDA_pin, .high);
+        gpio.setPin(SDA_pin, .high);
         delayMicroseconds(2);
-        gpio.digitalWrite(SCL_pin, .high);
+        gpio.setPin(SCL_pin, .high);
         delayMicroseconds(2);
-        gpio.digitalWrite(SCL_pin, .low);
+        gpio.setPin(SCL_pin, .low);
     }
 
     fn send(address: u8, byte: u8) void {

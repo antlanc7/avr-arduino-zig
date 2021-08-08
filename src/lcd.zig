@@ -46,17 +46,17 @@ pub fn begin() void {
     CurrentDisp.mode = 0;
     CurrentDisp.control = 0;
 
-    gpio.init(en_pin, .output);
-    gpio.init(rs_pin, .output);
+    gpio.setMode(en_pin, .output);
+    gpio.setMode(rs_pin, .output);
 
     inline for (data_pins) |pin| {
-        gpio.init(pin, .output);
+        gpio.setMode(pin, .output);
     }
 
     cpu.delayMilliseconds(45);
 
-    gpio.write(en_pin, .low);
-    gpio.write(rs_pin, .low);
+    gpio.setPin(en_pin, .low);
+    gpio.setPin(rs_pin, .low);
 
     write4bits(0x3);
     cpu.delayMilliseconds(5);
@@ -88,7 +88,7 @@ pub fn displayOn() void {
 }
 
 pub fn write(value: u8) void {
-    gpio.write(rs_pin, .high);
+    gpio.setPin(rs_pin, .high);
     write4bitsTwice(value);
 }
 
@@ -136,16 +136,16 @@ pub fn writePanic(msg: []const u8) void {
 }
 
 fn command(value: u8) void {
-    gpio.write(rs_pin, .low);
+    gpio.setPin(rs_pin, .low);
     write4bitsTwice(value);
 }
 
 fn write4bits(value: u4) void {
     inline for (data_pins) |pin, i| {
         if ((value >> i) & 1 != 0) {
-            gpio.write(pin, .high);
+            gpio.setPin(pin, .high);
         } else {
-            gpio.write(pin, .low);
+            gpio.setPin(pin, .low);
         }
     }
 
@@ -158,10 +158,10 @@ fn write4bitsTwice(value: u8) void {
 }
 
 fn pulseEnable() void {
-    gpio.write(en_pin, .low);
+    gpio.setPin(en_pin, .low);
     cpu.delayMicroseconds(1);
-    gpio.write(en_pin, .high);
+    gpio.setPin(en_pin, .high);
     cpu.delayMicroseconds(1);
-    gpio.write(en_pin, .low);
+    gpio.setPin(en_pin, .low);
     cpu.delayMicroseconds(100);
 }

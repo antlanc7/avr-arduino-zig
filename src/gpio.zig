@@ -1,5 +1,9 @@
 const MMIO = @import("mmio.zig").MMIO;
 
+// Register definititions:
+
+// IO PORTS:
+
 const PINB = MMIO(0x23, u8, packed struct {
     PINB0: u1 = 0,
     PINB1: u1 = 0,
@@ -99,6 +103,8 @@ const PORTD = MMIO(0x2B, u8, packed struct {
     PORTD7: u1 = 0,
 });
 
+// PWM (pulse width modulator)
+
 //Timers
 pub const TCCR2B = MMIO(0xB1, u8, packed struct {
     CS20: u1 = 0,
@@ -181,7 +187,28 @@ pub const ICR1L = @intToPtr(*volatile u16, 0x86);
 pub const TCNT1H = @intToPtr(*volatile u16, 0x85);
 pub const TCNT1L = @intToPtr(*volatile u16, 0x84);
 
-pub fn init(comptime pin: comptime_int, comptime mode: enum { input, output, input_pullup }) void {
+const MCUCR = MMIO(0x55, u8, packed struct {
+    IVCE: u1 = 0,
+    IVSEL: u1 = 0,
+    _1: u2 = 0,
+    PUD: u1 = 0,
+    BODSE: u1 = 0,
+    BODS: u1 = 0,
+    _2: u1 = 0,
+});
+
+/// Set the configuration registers
+pub fn init() void {
+    // PUD bit (Pull Up Disable) Atmel-7810-Automotive-Microcontrollers-ATmega328P_Datasheet.pdf#G1184233*
+    // make sure the bit is disabled for pullup resitors to work
+    // (already the default after reset)
+    var val = MCUCR.read();
+    val.PUD = 0;
+    MCUCR.write(val);
+}
+
+/// Configure the pin before use.
+pub fn setMode(comptime pin: comptime_int, comptime mode: enum { input, output, input_pullup, output_analog }) void {
     switch (pin) {
         0...7 => {
             var val = DDRD.readInt();
@@ -214,13 +241,19 @@ pub fn init(comptime pin: comptime_int, comptime mode: enum { input, output, inp
     }
 
     if (mode == .input_pullup) {
-        write(pin, .high);
+        setPin(pin, .high);
     } else {
-        write(pin, .low);
+        setPin(pin, .low);
     }
 }
 
-pub fn read(comptime pin: comptime_int) bool {
+pub const PinState = enum { low, high };
+
+pub fn getPin(comptime pin: comptime_int) PinState {
+    return if (getPinBool(pin)) .high else .low;
+}
+
+pub fn getPinBool(comptime pin: comptime_int) bool {
     switch (pin) {
         0...7 => {
             var val = PIND.readInt();
@@ -238,7 +271,7 @@ pub fn read(comptime pin: comptime_int) bool {
     }
 }
 
-pub fn write(comptime pin: comptime_int, comptime value: enum { low, high }) void {
+pub fn setPin(comptime pin: comptime_int, comptime value: PinState) void {
     switch (pin) {
         0...7 => {
             var val = PORTD.readInt();
@@ -271,7 +304,7 @@ pub fn write(comptime pin: comptime_int, comptime value: enum { low, high }) voi
     }
 }
 
-pub fn toggle(comptime pin: comptime_int) void {
+pub fn togglePin(comptime pin: comptime_int) void {
     switch (pin) {
         0...7 => {
             var val = PORTD.readInt();
@@ -292,7 +325,8 @@ pub fn toggle(comptime pin: comptime_int) void {
     }
 }
 
-pub fn analogWrite(comptime pin: comptime_int, value: u8) void {
+/// the pin must be configured in output_analog mode
+pub fn setPinAnalog(comptime pin: comptime_int, value: u8) void {
     pinMode(pin, .output);
 
     TCCR1A.writeInt(0b10000010);
@@ -331,34 +365,7 @@ pub fn analogWrite(comptime pin: comptime_int, value: u8) void {
             ICR1L.* = 255;
             OCR1BL.* = value;
         },
-        
 
         else => @compileError("Not valid PWM pin (allowed pins 3,5,6,9,10,11)."),
-    }
-}
-
-pub fn delayCycles(cycles: u32) void {
-    var count: u32 = 0;
-    while (count < cycles) : (count += 1) {
-        asm volatile ("nop");
-    }
-}
-
-pub fn delay(ms: u32) void {
-    var i: u32 = ms << 4;
-    while (i > 0) {
-        var c: u8 = 255;
-        // We decrement c to 0.
-        // This takes cycles * 256 / F_CPU miliseconds.
-        asm volatile (
-            \\1:
-            \\    dec %[c]
-            \\    nop
-            \\    brne 1b
-            :
-            : [c] "r" (c)
-        );
-
-        i -= 1;
     }
 }
