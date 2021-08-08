@@ -8,4 +8,5 @@ pub const lib = struct {
     pub const lcd = @import("lib/lcd.zig");
     pub const led_keypad = @import("lib/led_keypad.zig");
     pub const dht = @import("lib/dht.zig");
+    pub const neopixel = @import("lib/neopixel.zig");
 };
