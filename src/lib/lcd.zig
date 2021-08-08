@@ -1,5 +1,5 @@
-const gpio = @import("gpio.zig");
-const cpu = @import("cpu.zig");
+const gpio = @import("../gpio.zig");
+const cpu = @import("../cpu.zig");
 
 const rs_pin = 12;
 const en_pin = 11;

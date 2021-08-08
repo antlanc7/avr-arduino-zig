@@ -1,4 +1,4 @@
-const gpio = @import("gpio.zig");
+const gpio = @import("../gpio.zig");
 
 const Self = @This();
 
