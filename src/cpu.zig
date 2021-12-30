@@ -3,7 +3,7 @@ pub const CPU_FREQ = 16_000_000;
 
 pub fn delayNanoseconds(comptime nanoseconds: comptime_int) void {
     var cycles: comptime_int = 0;
-    inline while (cycles < nanoseconds / 63) : (count += 1) {
+    inline while (cycles < nanoseconds / 63) : (cycles += 1) {
         asm volatile ("nop");
     }
 }
@@ -38,7 +38,7 @@ pub fn delayMilliseconds(milliseconds: u32) void {
             \\    nop
             \\    brne 1b
             :
-            : [c] "r" (c)
+            : [c] "r" (c),
         );
     }
 }
