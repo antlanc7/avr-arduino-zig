@@ -6,6 +6,7 @@
 
 // bss_stuff = "\r\nhello\r\n".*;
 // uart.write(&bss_stuff);
+const std = @import("std");
 
 const MMIO = @import("mmio.zig").MMIO;
 
