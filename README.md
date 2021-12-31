@@ -12,8 +12,29 @@ This fork contains my tests and examples for some arduino programs in zig, based
 2. run `zigmod fetch`
 3. of course have to add `deps.addAllTo(exe)`, where `exe` should be the `LibExeObjStep` which is going to use this package.
 4. insert the following line into `build.zig`, where `exe` should be the `LibExeObjStep` for your main program.
-    ```
+    ```zig
     exe.setLinkerScriptPath(.{ .path = deps.dirs._ie76bs50j4tl ++ "/src/linker.ld" });
+    ```
+5. in your main program, add `const arduino = @import("arduino");`. For example, one can write
+    ```zig
+    const arduino = @import("arduino");
+    const gpio = arduino.gpio;
+
+    // Necessary, and has the side effect of pulling in the needed _start method
+    pub const panic = arduino.start.panicHang;
+
+    const LED: u8 = 13;
+
+    pub fn main() void {
+        gpio.setMode(LED, .output);
+
+        while (true) {
+            gpio.setPin(LED, .high);
+            arduino.cpu.delayMilliseconds(500);
+            gpio.setPin(LED, .low);
+            arduino.cpu.delayMilliseconds(500);
+        }
+    }
     ```
 
 ## Build instructions
