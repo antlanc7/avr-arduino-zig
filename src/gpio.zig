@@ -317,7 +317,7 @@ pub fn getPin(comptime pin: comptime_int) PinState {
     return if (is_set != 0) .high else .low;
 }
 
-pub fn setPin(comptime pin: comptime_int, comptime value: PinState) void {
+pub fn setPin(comptime pin: comptime_int, value: PinState) void {
     switch (pin) {
         0...7 => PORTD.writeInt(setBit(PORTD.readInt(), (pin - 0), (value == .high))),
         8...13 => PORTB.writeInt(setBit(PORTB.readInt(), (pin - 8), (value == .high))),
