@@ -31,8 +31,8 @@ pub fn build(b: *std.build.Builder) !void {
     const tty = b.option(
         []const u8,
         "tty",
-        "Specify the port to which the Arduino is connected (defaults to /dev/ttyACM0)",
-    ) orelse "/dev/ttyACM0";
+        "Specify the port to which the Arduino is connected (defaults to COM3)",
+    ) orelse "COM3";
 
     const bin_path = b.getInstallPath(exe.install_step.?.dest_dir, exe.out_filename);
 
@@ -47,6 +47,7 @@ pub fn build(b: *std.build.Builder) !void {
     const upload = b.step("upload", "Upload the code to an Arduino device using avrdude");
     const avrdude = b.addSystemCommand(&.{
         "avrdude",
+        "-CC:\\Program Files (x86)\\Arduino\\hardware\\tools\\avr\\etc\\avrdude.conf",
         "-carduino",
         "-patmega328p",
         "-D",
@@ -68,7 +69,9 @@ pub fn build(b: *std.build.Builder) !void {
 
     const monitor = b.step("monitor", "Opens a monitor to the serial output");
     const screen = b.addSystemCommand(&.{
-        "screen",
+        "py",
+        "-m",
+        "serial.tools.miniterm",
         tty,
         "115200",
     });
